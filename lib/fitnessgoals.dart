@@ -157,7 +157,7 @@ int goaltime=1;
                   final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day).subtract(Duration(days:(goaltime-1)));
 
-    bool requested = await health.requestAuthorization([HealthDataType.STEPS]);
+    bool requested = await health.requestAuthorization([HealthDataType.STEPS]); 
 
     if (requested) {
       try {
