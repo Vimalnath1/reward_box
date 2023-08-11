@@ -7,8 +7,9 @@ import 'package:health/health.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:reward_box/util.dart';
+import 'package:reward_box/main.dart';
 import 'package:flutter_health_connect/flutter_health_connect.dart';
-
+import 'package:reward_box/lockboxmode.dart';
 
 class FitnessScreen extends StatefulWidget {
   const FitnessScreen({super.key});
@@ -18,7 +19,7 @@ class FitnessScreen extends StatefulWidget {
 }
 late TextEditingController controller;
 
-bool lockstatus=false;
+
 Future<void> openbox() async {
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
   var connecteddevices=await flutterBlue.connectedDevices;
@@ -50,8 +51,7 @@ class _FitnessScreenState extends State<FitnessScreen> {
   String goal="";
   var stepgoalexists=false;
   var caloriegoalexists=false;
-  var stepdata=0;
-var caloriedata=0;
+  
 int goaltime=1;
 
   void initState(){

@@ -5,6 +5,7 @@ import 'package:flutter/src/widgets/framework.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:reward_box/main.dart';
 
 class BluetoothScreen extends StatefulWidget {
   const BluetoothScreen({super.key});
@@ -17,8 +18,8 @@ Widget devicebutton(String title, BuildContext context){
   return ElevatedButton(onPressed: () async {
     FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
     var result;
-    FlutterBluePlus.instance.startScan(timeout: const Duration(milliseconds: 100));
-                FlutterBluePlus.instance.stopScan();
+    // FlutterBluePlus.instance.startScan(timeout: const Duration(milliseconds: 100));
+    //             FlutterBluePlus.instance.stopScan();
                 Timer(Duration(milliseconds: 100), () {
   flutterBlue.startScan(timeout: const Duration(seconds: 1));
 });
@@ -27,6 +28,7 @@ Widget devicebutton(String title, BuildContext context){
       for (ScanResult devices in results){
         if (devices.device.name==title){
           devices.device.connect();
+          Navigator.push(context, MaterialPageRoute(builder: (context)=> const MyApp()));
         }
       }
       },
@@ -84,8 +86,8 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                   devicelist=Set();
                 });
               
-                FlutterBluePlus.instance.startScan(timeout: const Duration(milliseconds: 100));
-                FlutterBluePlus.instance.stopScan();
+                // FlutterBluePlus.instance.startScan(timeout: const Duration(milliseconds: 100));
+                // FlutterBluePlus.instance.stopScan();
                 Timer(Duration(milliseconds: 100), () {
   flutterBlue.startScan(timeout: const Duration(seconds: 1));
 });
@@ -122,10 +124,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                   devicebuttons.add(devicebutton(devicename,context));
                   }
                   print("wahoo");
+                  if (devicebuttons.isNotEmpty){
                   setState(() {
                   thing=true;
-                  
-                });
+                });}
                 }}, child: Text("Show Devices")),
               thing?
 

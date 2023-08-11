@@ -7,8 +7,9 @@ import 'package:app_usage/app_usage.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
+import 'package:reward_box/lockboxmode.dart';
 
-bool lockstatus=false;
+
 Future<void> openbox() async {
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
   var connecteddevices=await flutterBlue.connectedDevices;

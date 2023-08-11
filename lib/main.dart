@@ -6,7 +6,10 @@ import 'package:reward_box/bluetooth.dart';
 import 'package:reward_box/fitnessgoals.dart';
 import 'package:reward_box/lockboxmode.dart';
 import 'package:reward_box/screentime.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+var stepdata=0;
+var caloriedata=0;
 void main() {
   /*if (Platform.isAndroid) {
     WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +24,7 @@ void main() {
   });
   } else {*/
       runApp(MaterialApp(home: MyApp()));
+      
   //}
 }
 
@@ -32,8 +36,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       appBar: AppBar(
         title: Text("Reward Box"),
