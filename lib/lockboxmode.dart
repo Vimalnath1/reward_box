@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_auth/local_auth.dart';
 
 class LockboxScreen extends StatefulWidget {
   const LockboxScreen({super.key});
@@ -47,18 +49,35 @@ print(lockstatus);
 }
     
 class _LockboxScreenState extends State<LockboxScreen> {
+  late final LocalAuthentication auth;
+  bool canauth=false;
+  bool authenticated=false;
+  void initState(){
+      super.initState();
+      auth=LocalAuthentication();
+      auth.isDeviceSupported().then((bool isSupport) => setState(() {
+        canauth=isSupport;
+      },));
+    }
+    Future<void> getbiometrics() async{
+      List<BiometricType> availablebio=await auth.getAvailableBiometrics();
+      print("$availablebio");
+    }
   @override
   Widget build(BuildContext context) {
-
+    
+    
     return Scaffold(
       appBar: AppBar(
         title: Text("Lockbox Mode"),
         centerTitle: true,
       ),
       body: Center(
-        child: 
-            LockSwitch()  
-        )
+        child:
+            
+              LockSwitch(),
+        ),
+      
     );
   }
 }
@@ -70,30 +89,69 @@ class LockSwitch extends StatefulWidget {
 }
 
 class _LockSwitchState extends State<LockSwitch> {
+  late final LocalAuthentication auth;
+  bool canauth=false;
+  bool authenticated=false;
+  void initState(){
+      super.initState();
+      auth=LocalAuthentication();
+      auth.isDeviceSupported().then((bool isSupport) => setState(() {
+        canauth=isSupport;
+      },));
+    }
   @override
+  
   Widget build(BuildContext context) {
+    Future<void> authenticate() async{
+    try {
+    authenticated=await auth.authenticate(
+      localizedReason:
+        "Authenticate to unlock the box",
+      options: const AuthenticationOptions(
+        stickyAuth: true,
+        biometricOnly: true
+      ),
+    );
+    }
+    on PlatformException catch(e){
+      print(e);
+    }
+  }
     
     return Switch(value: lockstatus,  onChanged:(bool value) {
+      if (lockstatus==false){
+        authenticate();
         // This is called when the user toggles the switch.
+        if (authenticated){
         setState(() {
           //final SharedPreferences preference = await prefs;
           lockstatus = value;
           openbox();
-          // Timer(Duration(milliseconds: 60000), () {
-          //   if (lockstatus){
-          //     lockstatus=false;
-          //     openbox();
-          //   }
-          //   else{
-
-          //   }
-          // });
           
-          //preference.setBool("lockstatus", value);
         });
+    }
+    else{
+      setState(() {
+          //final SharedPreferences preference = await prefs;
+          lockstatus = false;
+          openbox();
           
-      },
-    );
+        });
+    }
+      }
+      else{
+    setState(() {
+          //final SharedPreferences preference = await prefs;
+          lockstatus = value;
+          openbox();
+          
+        });
   }
+  }
+    
+    );
+    
+  }
+  
 }
     
