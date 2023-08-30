@@ -46,7 +46,12 @@ dependencies:
   duration: ^3.0.12
   shared_preferences: ^2.2.0
   local_auth: ^2.1.6
-
+  usage_stats: ^1.2.0
+  app_settings: ^5.0.0
+  external_app_launcher: ^3.1.0
+  flutter_isolate: ^2.0.4
+  android_alarm_manager_plus: ^3.0.2
+  flutter_background_service: ^5.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

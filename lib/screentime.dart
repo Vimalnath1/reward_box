@@ -4,35 +4,40 @@ import 'package:duration/duration.dart';
 
 import 'package:flutter/material.dart';
 import 'package:app_usage/app_usage.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:reward_box/lockboxmode.dart';
+import 'package:reward_box/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:usage_stats/usage_stats.dart';
+import 'package:app_settings/app_settings.dart';
+import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 
-
-Future<void> openbox() async {
-  FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
-  var connecteddevices=await flutterBlue.connectedDevices;
-  for (var device in connecteddevices){
-    if (device.name=="Reward Box"){
-      //Navigator.push(context, MaterialPageRoute(builder: (context)=> const ChatPage()));
-      List<BluetoothService> services = await device.discoverServices();
-      services.forEach((service) async {
-        var characteristics = service.characteristics;
-        if (lockstatus==true){
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65]);
-}
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
-          }
-        }
-      });
-    }
-  }
-}
+// Future<void> openbox() async {
+//   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
+//   var connecteddevices=await flutterBlue.connectedDevices;
+//   for (var device in connecteddevices){
+//     if (device.name=="Reward Box"){
+//       //Navigator.push(context, MaterialPageRoute(builder: (context)=> const ChatPage()));
+//       List<BluetoothService> services = await device.discoverServices();
+//       services.forEach((service) async {
+//         var characteristics = service.characteristics;
+//         if (lockstatus==true){
+// for(BluetoothCharacteristic c in characteristics) {
+//     await c.write([0x74 , 0x72 , 0x75, 0x65]);
+// }
+//         }
+//         else {
+//           for(BluetoothCharacteristic c in characteristics) {
+//               await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
+//           }
+//         }
+//       });
+//     }
+//   }
+// }
 class ScreenTime extends StatefulWidget {
   const ScreenTime({super.key});
 
@@ -42,32 +47,51 @@ class ScreenTime extends StatefulWidget {
 String appname="";
 List<String> searchapps=[];
 
-Widget appbutton(var title,var appicon){
-  return ElevatedButton(onPressed: () {
-    
-    appname=title.toString();
-  }, child: Text("meow"));
-}
+
 class _ScreenTimeState extends State<ScreenTime> {
   List<AppUsageInfo> _infos = [];
+  List<UsageInfo> things=[];
   List<Widget> appbuttons=[];
+  Map<String, UsageInfo> meow={};
   bool pressed=false;
   late TextEditingController controller;
   String goal="";
- 
+  bool gotdata=false;
+  late SharedPreferences preferences;
+  int time=0;
+  int tim=0;
+  int hours=0;
+  int minutes=0;
   @override
   void initState() {
      controller=TextEditingController();
     super.initState();
+  UsageStats.grantUsagePermission();
   }
-
+  Future init() async{
+    preferences=await SharedPreferences.getInstance();
+    goal=preferences.getString("goal")!;
+    setState(()=> this.goal=goal);
+  }
+  DateTime endDate = DateTime.now();
+      DateTime startDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   void getUsageStats() async {
     try {
-      DateTime endDate = DateTime.now();
-      DateTime startDate = DateTime(endDate.year, endDate.month, endDate.day);
-      List<AppUsageInfo> infoList =
-          await AppUsage().getAppUsage(startDate, endDate);
+      
+      //DateTime.now().subtract(Duration(hours: 1));//
+      print(endDate);
+      print(startDate);
+      Map<String, UsageInfo> bar = await UsageStats.queryAndAggregateUsageStats(startDate, endDate);
+      List<UsageInfo> bare=await UsageStats.queryUsageStats(startDate, endDate);
+      List<AppUsageInfo> infoList =await AppUsage().getAppUsage(startDate, endDate);
       setState(() => _infos = infoList);
+      setState(() => things = bare);
+      setState(() {
+        meow=bar;
+      });
+      // bar.forEach((key, value) {
+      //   print("$key ${value.totalTimeInForeground}");
+      // });
 
       
     } on AppUsageException catch (exception) {
@@ -80,22 +104,24 @@ class _ScreenTimeState extends State<ScreenTime> {
   builder: (context)=>AlertDialog(
     title: Text("Set Goal"),
     content:Column(children: [
-      IconButton(icon: Icon(Icons.search),onPressed: () {showSearch(context: context, delegate: CustomSearchDelegate());},),
       TextField(
       autofocus: true,
       decoration:InputDecoration(hintText: "Set goal time in hours"),
       controller: controller,
     ),
+    ElevatedButton(onPressed: () {showSearch(context: context, delegate: CustomSearchDelegate());},child: Text("Choose App"),),
       ]
     ), 
     actions: [
      TextButton(onPressed: () {
         {Navigator.of(context).pop(controller.text);}
+
       }, child: Text("Submit")),
 
     ],
   )
 );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,35 +147,101 @@ class _ScreenTimeState extends State<ScreenTime> {
                 pressed=true;
               });
         }, child: Text("Set Goal")),
-
+          ElevatedButton(onPressed: ()  {
+            //AppSettings.openAppSettings(type:AppSettingsType.display);
+            //FlutterBackgroundService().invoke("setAsBackground");
+          }, child: Text("Settings")),
         pressed?
         Column(children: [
-          ElevatedButton(onPressed: () {getUsageStats();}, child: const Text("Get Screen Time Data"))
-          ,ElevatedButton(onPressed: () async {
-          List<AppInfo> apps = await InstalledApps.getInstalledApps(true, true);
-          int appindex=0;
+          Text("App Chosen: $appname"),
+          ElevatedButton(onPressed: () async {
+            getUsageStats();
+            List<AppInfo> apps = await InstalledApps.getInstalledApps(true, true);
+          String selectedapp="";
+          int tin=0;
           for (var app in apps){
                 if (appname==app.name){
-                  appindex=apps.indexOf(app);
+                  selectedapp=app.packageName!;
                 }
               }
+          for (var thing in things){
+            
+          if (thing.packageName==selectedapp){
+            tin+=1;
+            
+            print(thing.firstTimeStamp);
+            print(thing.lastTimeStamp);
+            //print(thing.lastTimeUsed);
+            print(thing.totalTimeInForeground!);
+          time+=int.parse(thing.totalTimeInForeground!);
+          print(tin);
+      //     meow.forEach((key, value) {
+      //       if (key==selectedapp){
+      //   //print("$key ${value.totalTimeInForeground}");
+      //   time+=int.parse(value.totalTimeInForeground!);
+      //   }
+      //  });
+          }
+          
+          //print(thing.packageName);
+
+        
+            }
+          //time=(time/tin).round();
+          //if (int.parse(screentimepreferences.getString("${selectedapp} FirstTime")!)<startDate.millisecondsSinceEpoch){
+            time-=screentimepreferences.getInt("${selectedapp} PreviousTime")!;
+            if (time<0){
+              time=0;
+            }
+            print(screentimepreferences.getInt("${selectedapp} PreviousTime")!);
+          //}
           for (var info in _infos) {
-            if (info.packageName==apps.elementAt(appindex).packageName){
-              List<String> gettingtime=info.usage.toString().split("");
-              int time=0;
-              time+=int.parse(gettingtime[0])*60;
-              time+=int.parse(gettingtime[2]+gettingtime[3]);
-              print(time);
-              if (time<(int.parse(goal)*60)){
-                lockstatus=true;
+            if (info.packageName==selectedapp){
+              print(info.startDate);
+              print(info.endDate);
+              List<String> gettingtime=info.
+              usage.toString().split("");
+              print(gettingtime);
+              tim+=int.parse(gettingtime[0])*60;
+              tim+=int.parse(gettingtime[2]+gettingtime[3]);
+              print(tim);
+
+               minutes=(int.parse(goal)*60)-((time/60000).floor());
+               print(minutes);
+              if (minutes>60){
+                minutes=minutes-((minutes/60).floor())*60;
+              }
+              print((time/1000/60));
+              if (time/1000/60>1.0){
+               hours=int.parse(goal)-((time/1000/3600).ceil());
               }
               else{
-                lockstatus=false;
+                hours=int.parse(goal)-((time/1000/3600).floor());
+              }
+               print(hours);
+          //print(time);
+              if (time<(int.parse(goal)*60)){
+                lockstatusscreentime=true;
+              }
+              else{
+                lockstatusscreentime=false;
               }
               openbox();
+              setState(() {
+                gotdata=true;
+              });
+              
             } 
           }
-          },child:Text("Open Box"))])
+          }, child: const Text("Get Screen Time Data")),
+            if (gotdata)
+              Text("Goal: $goal hours"),
+            if (hours>=0 && gotdata) 
+              Text("Time Remaining: $hours hours and $minutes minutes"),
+            if (minutes<0)
+              Text("You have exceeded the goal")
+          
+          ])
 
         :Text(""),
        ] ),),

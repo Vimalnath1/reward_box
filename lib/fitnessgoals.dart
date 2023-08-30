@@ -1,3 +1,6 @@
+import 'dart:isolate';
+
+import 'package:duration/duration.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 
@@ -10,6 +13,11 @@ import 'package:reward_box/util.dart';
 import 'package:reward_box/main.dart';
 import 'package:flutter_health_connect/flutter_health_connect.dart';
 import 'package:reward_box/lockboxmode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:reward_box/utils/user_simple_preferences.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 
 class FitnessScreen extends StatefulWidget {
   const FitnessScreen({super.key});
@@ -20,29 +28,30 @@ class FitnessScreen extends StatefulWidget {
 late TextEditingController controller;
 
 
-Future<void> openbox() async {
-  FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
-  var connecteddevices=await flutterBlue.connectedDevices;
-  for (var device in connecteddevices){
-    if (device.name=="Reward Box"){
-      //Navigator.push(context, MaterialPageRoute(builder: (context)=> const ChatPage()));
-      List<BluetoothService> services = await device.discoverServices();
-      services.forEach((service) async {
-        var characteristics = service.characteristics;
-        if (lockstatus==true){
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65]);
-}
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
-          }
-        }
-      });
-    }
-  }
-}
+
+// Future<void> openbox() async {
+//   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
+//   var connecteddevices=await flutterBlue.connectedDevices;
+//   for (var device in connecteddevices){
+//     if (device.localName=="Reward Box"){
+//       //Navigator.push(context, MaterialPageRoute(builder: (context)=> const ChatPage()));
+//       List<BluetoothService> services = await device.discoverServices();
+//       services.forEach((service) async {
+//         var characteristics = service.characteristics;
+//         if (lockstatus==true){
+// for(BluetoothCharacteristic c in characteristics) {
+//     await c.write([0x74 , 0x72 , 0x75, 0x65]);
+// }
+//         }
+//         else {
+//           for(BluetoothCharacteristic c in characteristics) {
+//               await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
+//           }
+//         }
+//       });
+//     }
+//   }
+// }
 class _FitnessScreenState extends State<FitnessScreen> {
   List<HealthDataPoint> _healthDataList = [];
   static final types = dataTypesAndroid;
@@ -51,14 +60,60 @@ class _FitnessScreenState extends State<FitnessScreen> {
   String goal="";
   var stepgoalexists=false;
   var caloriegoalexists=false;
+  late SharedPreferences preferences;
   
 int goaltime=1;
 
   void initState(){
+    
     super.initState();
-
+    init();
+    
+  //goal=UserSimplePreferences.getFitnessGoal() ??"";
+  
+  
    controller=TextEditingController();
    }
+  Future init() async {
+    //await initializeService();
+  //   await AndroidAlarmManager.initialize();
+  //   await AndroidAlarmManager.periodic(const Duration(minutes: 2), 0, printHello,exact: true, // Set to true for precise timing
+  // wakeup: true,);
+    preferences=await SharedPreferences.getInstance();
+    goal=preferences.getString("goal")!;
+    print(preferences.getString("goal")!);
+    getSteps();
+    setState(()=> this.goal=goal);
+    if (goal!=""){
+    stepgoalexists=true;
+    caloriegoalexists=true;
+  }
+  else{
+    stepgoalexists=false;
+    caloriegoalexists=false;
+  }
+  }
+  void getSteps(){
+    int? steptimestamp=preferences.getInt("time");
+    if (steptimestamp!-(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).millisecondsSinceEpoch>0){
+      stepdata=preferences.getInt("steps")!;
+    }
+    else{
+      stepdata=0;
+    }
+    
+    }
+//  static void printHello() async {
+//   final DateTime now = DateTime.now();
+//   //setState(() {
+//     stepdata=0;
+//   //});
+//   print("$stepdata $now");
+//   //preferences.setInt("steps", stepdata);
+// }
+
+
+
   Future <String?>openDialog(String title,int minimum)=> showDialog<String>(
   
   context: context, 
@@ -114,7 +169,10 @@ int goaltime=1;
                 ElevatedButton(onPressed: () async {
                   final goal= await openDialog("Step Goal",5000);
                   setState(()=>this.goal=goal!);
-                  print(goal);
+                  //print(goal);
+                  preferences.setString("goal", goal!);
+                  print("${preferences.getString("goal")} Weee");
+                  //UserSimplePreferences.setFitnessGoal(goal!.toString());
                   setState(() {
                     stepgoalexists=true;
                   });
@@ -152,8 +210,9 @@ int goaltime=1;
         print("Exception in authorize: $error");
       }
     }
+                  print(preferences.getInt("steps"));
                   int? steps;
-                  
+                  //steps=UserSimplePreferences.getsavedSteps()??0;
                   final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day).subtract(Duration(days:(goaltime-1)));
 
@@ -163,7 +222,10 @@ int goaltime=1;
       try {
 
         //print("Wahoo ${healthDataList[0].value}");
+        
+
         steps=await health.getTotalStepsInInterval(midnight, now);
+        
       } catch (error) {
         print("Caught exception in getTotalStepsInInterval: $error");
       }
@@ -172,7 +234,8 @@ int goaltime=1;
 
       setState(() {
         stepdata = (steps == null) ? 0 : steps;
-        
+        preferences.setInt("time", DateTime.now().millisecondsSinceEpoch);
+        preferences.setInt("steps", stepdata);
       });
     } else {
       print("Authorization not granted - error in authorization");
@@ -237,13 +300,14 @@ int goaltime=1;
   }
 
   Widget goalprogress(String goaltype, String goal,int data) {
+    
     return Column(
       children: [
         Text("$goaltype Goal: $goal"),
         Text("$goaltype Left: ${(int.parse(goal)-data).toString()}"),
         ElevatedButton(onPressed: () {
           if ((int.parse(goal)-data)<=0){
-            lockstatus=true;
+            lockstatusfitness=true;
             openbox();
             
           }

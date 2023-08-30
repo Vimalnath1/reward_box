@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:reward_box/main.dart';
 
 class LockboxScreen extends StatefulWidget {
   const LockboxScreen({super.key});
@@ -17,22 +18,28 @@ class LockboxScreen extends StatefulWidget {
 }
 Future<SharedPreferences> prefs=SharedPreferences.getInstance();
 bool lockstatus=false;
-
+bool lockstatusfitness=false;
+bool lockstatusscreentime=false;
 Future<void> openbox() async {
+  
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
   var connecteddevices=await flutterBlue.connectedDevices;
   for (var device in connecteddevices){
-    if (device.name=="Reward Box"){
+    if (device.localName=="Reward Box"){
       //Navigator.push(context, MaterialPageRoute(builder: (context)=> const ChatPage()));
       List<BluetoothService> services = await device.discoverServices();
+      
       services.forEach((service) async {
         var characteristics = service.characteristics;
+        if (custom! && fitness==false && screentime==false){
         if (lockstatus==true){
+          
 for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65]);
+    await c.write([0x74 , 0x72 , 0x75, 0x65, 0x63]);
 }
+
 print(lockstatus);
- Timer(Duration(milliseconds: 10000), () async {
+ Timer(Duration(milliseconds: 600000), () async {
             for(BluetoothCharacteristic c in characteristics) {
               await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
           }
@@ -40,8 +47,129 @@ print(lockstatus);
         }
         else {
           for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]); 
           }
+        }
+        }
+        else if (custom! && fitness! && screentime==false){
+if (lockstatus==true &&lockstatusfitness==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x63,0x66]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
+        }
+        else if (custom==false && fitness! && screentime==false){
+          if (lockstatusfitness==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
+        }
+        else if (custom==false && fitness==false && screentime!){
+          if (lockstatusscreentime==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x73]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
+        }
+        else if (custom==false && fitness! && screentime!){
+          if (lockstatusscreentime==true && lockstatusfitness==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66,0x73]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
+        }
+        else if (custom! && fitness! && screentime!){
+          if (lockstatusscreentime==true && lockstatusfitness==true && lockstatus==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66,0x73,0x63]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
+        }
+        else if (custom! && fitness==false && screentime!){
+          if (lockstatusscreentime==true && lockstatus==true){
+          
+for(BluetoothCharacteristic c in characteristics) {
+    await c.write([0x74 , 0x72 , 0x75, 0x65,0x73,0x63]);
+}
+
+print(lockstatus);
+ Timer(Duration(milliseconds: 600000), () async {
+            for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
+          }
+          });
+        }
+        else {
+          for(BluetoothCharacteristic c in characteristics) {
+              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
+          }
+        }
         }
       });
     }
@@ -109,7 +237,7 @@ class _LockSwitchState extends State<LockSwitch> {
         "Authenticate to unlock the box",
       options: const AuthenticationOptions(
         stickyAuth: true,
-        biometricOnly: true
+        biometricOnly: false
       ),
     );
     }
