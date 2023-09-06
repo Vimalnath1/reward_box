@@ -26,6 +26,7 @@ bool? screentime=false;
 bool? custom=false;
 late SharedPreferences goalpreferences;
 late SharedPreferences screentimepreferences;
+late SharedPreferences preferences;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   screentimepreferences=await SharedPreferences.getInstance();
@@ -127,7 +128,7 @@ void initState(){
               // }, child:Text("Timer Mode")),
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const LockboxScreen()));
-              }, child:Text("Lockbox Mode")),
+              }, child:Text("Parental Mode")),
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const ScreenTime()));
               }, child:Text("Screen Time Mode")),
@@ -260,13 +261,19 @@ void onStart(ServiceInstance service) async {
   // We have to register the plugin manually
   goalpreferences=await SharedPreferences.getInstance();
   screentimepreferences=await SharedPreferences.getInstance();
+  preferences=await SharedPreferences.getInstance();
   DateTime currentTime=DateTime.now();
-  int delay=DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(Duration(hours: 23,minutes: 59)).millisecondsSinceEpoch-currentTime.millisecondsSinceEpoch;
+  int nexttime=DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(Duration(hours:23,minutes: 55)).millisecondsSinceEpoch;
+  int delay=nexttime-currentTime.millisecondsSinceEpoch;
+  // int otherdelay=DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(Duration(hours:23,minutes: 22)).millisecondsSinceEpoch-DateTime.now().millisecondsSinceEpoch;
+  // print(otherdelay);
+  // Timer(Duration(milliseconds:otherdelay), (){
+  //   preferences.setString("goal",(81352).toString());
+  // });
   // print(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(Duration(hours: 20,minutes: 30)).millisecondsSinceEpoch);
   // print(currentTime.millisecondsSinceEpoch);
   print(delay);
   Timer(Duration(milliseconds:delay), () async { 
-    // Your code to execute at 7:35 goes here
     DateTime endDate = DateTime.now();
     DateTime startDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     List<UsageInfo> things=await UsageStats.queryUsageStats(startDate, endDate);
@@ -283,26 +290,55 @@ void onStart(ServiceInstance service) async {
           for (var thing in things){
             if (int.parse(thing.firstTimeStamp!)>DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).millisecondsSinceEpoch){
             screentimepreferences.setString("${thing.packageName!} FirstTime", thing.firstTimeStamp!);
+            screentimepreferences.setString("${thing.packageName!} EndTime", thing.lastTimeStamp!);
             
-            // tin+=1;
-            
-            // print(thing.firstTimeStamp);
-            // print(thing.lastTimeStamp);
-            //print(thing.lastTimeUsed);
-            // print(thing.totalTimeInForeground!);
           times.add(int.parse(thing.totalTimeInForeground!));
-          // screentimepreferences.setInt("previoustime", times[times.length-1]);
+          //screentimepreferences.setInt("${thing.packageName!} PreviousTime", 110000);
           screentimepreferences.setInt("${thing.packageName!} PreviousTime", times[times.length-1]);
           print("${thing.packageName!} PreviousTime");
           times=[];
           // print(tin);
           }
           }
+Timer(Duration(milliseconds:(nexttime-currentTime.millisecondsSinceEpoch)), () async { 
+    DateTime endDate = DateTime.now();
+    DateTime startDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    List<UsageInfo> things=await UsageStats.queryUsageStats(startDate, endDate);
+
+    List<AppInfo> apps = await InstalledApps.getInstalledApps(true, true);
+    List<int> times=[];
+          String selectedapp="";
+          int tin=0;
+          // for (var app in apps){
+          //       if (appname==app.name){
+          //         selectedapp=app.packageName!;
+          //       }
+          //     }
+          for (var thing in things){
+            if (int.parse(thing.firstTimeStamp!)>DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).millisecondsSinceEpoch){
+            screentimepreferences.setString("${thing.packageName!} FirstTime", thing.firstTimeStamp!);
+            screentimepreferences.setString("${thing.packageName!} EndTime", thing.lastTimeStamp!);
+            
+          times.add(int.parse(thing.totalTimeInForeground!));
+          //screentimepreferences.setInt("${thing.packageName!} PreviousTime", 110000);
+          screentimepreferences.setInt("${thing.packageName!} PreviousTime", times[times.length-1]);
+          print("${thing.packageName!} PreviousTime");
+          times=[];
+          // print(tin);
+          }
+          }
+
           //}
     // fitness=true;
     // goalpreferences.setBool("fitness",fitness!);
     // print(fitness);
   });
+          //}
+    // fitness=true;
+    // goalpreferences.setBool("fitness",fitness!);
+    // print(fitness);
+  });
+
 
   /// OPTIONAL when use custom notification
 

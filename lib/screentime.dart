@@ -55,10 +55,11 @@ class _ScreenTimeState extends State<ScreenTime> {
   Map<String, UsageInfo> meow={};
   bool pressed=false;
   late TextEditingController controller;
-  String goal="";
+  String screengoal="";
   bool gotdata=false;
   late SharedPreferences preferences;
-  int time=0;
+  
+  //int time=0;
   int tim=0;
   int hours=0;
   int minutes=0;
@@ -66,13 +67,20 @@ class _ScreenTimeState extends State<ScreenTime> {
   void initState() {
      controller=TextEditingController();
     super.initState();
+    init();
   UsageStats.grantUsagePermission();
   }
-  Future init() async{
-    preferences=await SharedPreferences.getInstance();
-    goal=preferences.getString("goal")!;
-    setState(()=> this.goal=goal);
+    Future init() async{
+      appname=screentimepreferences.getString("app")!;
+      screengoal=screentimepreferences.getString("screengoal")!;
+      //setState(()=> this.appname=appname);
+      if (appname!=""){
+        pressed=true;
+      }
+    // time=screentimepreferences.getInt("screentime")!;
+    // print(time);
   }
+
   DateTime endDate = DateTime.now();
       DateTime startDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   void getUsageStats() async {
@@ -115,6 +123,7 @@ class _ScreenTimeState extends State<ScreenTime> {
     actions: [
      TextButton(onPressed: () {
         {Navigator.of(context).pop(controller.text);}
+        controller.clear();
 
       }, child: Text("Submit")),
 
@@ -141,8 +150,10 @@ class _ScreenTimeState extends State<ScreenTime> {
               for (var app in apps){
                 searchapps.add((app.name).toString());
               }
-              final goal=await openDialog(appbuttons);
-              setState(()=>this.goal=goal!);
+              final screengoal=await openDialog(appbuttons);
+              screentimepreferences.setString("app",appname);
+              screentimepreferences.setString("screengoal",screengoal);
+              setState(()=>this.screengoal=screengoal!);
               setState(() {
                 pressed=true;
               });
@@ -155,10 +166,12 @@ class _ScreenTimeState extends State<ScreenTime> {
         Column(children: [
           Text("App Chosen: $appname"),
           ElevatedButton(onPressed: () async {
+            time=0;
             getUsageStats();
             List<AppInfo> apps = await InstalledApps.getInstalledApps(true, true);
           String selectedapp="";
           int tin=0;
+          
           for (var app in apps){
                 if (appname==app.name){
                   selectedapp=app.packageName!;
@@ -189,11 +202,16 @@ class _ScreenTimeState extends State<ScreenTime> {
             }
           //time=(time/tin).round();
           //if (int.parse(screentimepreferences.getString("${selectedapp} FirstTime")!)<startDate.millisecondsSinceEpoch){
+            print(time);
             time-=screentimepreferences.getInt("${selectedapp} PreviousTime")!;
+            print(screentimepreferences.getInt("${selectedapp} PreviousTime")!);
             if (time<0){
               time=0;
             }
-            print(screentimepreferences.getInt("${selectedapp} PreviousTime")!);
+            //screentimepreferences.setInt("screentime",time);
+            print(screentimepreferences.getString("${selectedapp} FirstTime")!);
+            print(screentimepreferences.getString("${selectedapp} EndTime")!);
+            
           //}
           for (var info in _infos) {
             if (info.packageName==selectedapp){
@@ -206,21 +224,21 @@ class _ScreenTimeState extends State<ScreenTime> {
               tim+=int.parse(gettingtime[2]+gettingtime[3]);
               print(tim);
 
-               minutes=(int.parse(goal)*60)-((time/60000).floor());
+               minutes=(int.parse(screengoal)*60)-((time/60000).floor());
                print(minutes);
               if (minutes>60){
                 minutes=minutes-((minutes/60).floor())*60;
               }
               print((time/1000/60));
               if (time/1000/60>1.0){
-               hours=int.parse(goal)-((time/1000/3600).ceil());
+               hours=int.parse(screengoal)-((time/1000/3600).ceil());
               }
               else{
-                hours=int.parse(goal)-((time/1000/3600).floor());
+                hours=int.parse(screengoal)-((time/1000/3600).floor());
               }
                print(hours);
           //print(time);
-              if (time<(int.parse(goal)*60)){
+              if (time<(int.parse(screengoal)*60)){
                 lockstatusscreentime=true;
               }
               else{
@@ -235,7 +253,7 @@ class _ScreenTimeState extends State<ScreenTime> {
           }
           }, child: const Text("Get Screen Time Data")),
             if (gotdata)
-              Text("Goal: $goal hours"),
+              Text("Goal: $screengoal hours"),
             if (hours>=0 && gotdata) 
               Text("Time Remaining: $hours hours and $minutes minutes"),
             if (minutes<0)

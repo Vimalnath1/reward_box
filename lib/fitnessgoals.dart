@@ -146,6 +146,7 @@ int goaltime=1;
       TextButton(onPressed: () {
         if (int.parse(controller.text)>=minimum)
         {Navigator.of(context).pop(controller.text);}
+        controller.clear();
       }, child: Text("Submit")),
 
     ],

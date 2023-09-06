@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/src/widgets/container.dart';
@@ -175,111 +176,256 @@ print(lockstatus);
     }
   }
 }
-    
+
+
+
 class _LockboxScreenState extends State<LockboxScreen> {
   late final LocalAuthentication auth;
   bool canauth=false;
   bool authenticated=false;
+  late TextEditingController controller;
+  List<Widget> choretiles=[];
+  Map chorelist={};
+  
+  late SharedPreferences preferences;
+  List<String> chorenames=[];
   void initState(){
+    init();
+    controller=TextEditingController();
       super.initState();
       auth=LocalAuthentication();
       auth.isDeviceSupported().then((bool isSupport) => setState(() {
         canauth=isSupport;
       },));
+    }
+    Future init() async {
+      preferences=await SharedPreferences.getInstance();
+      if (preferences.getStringList("chorenames")!=null){
+        chorenames=preferences.getStringList("chorenames")!;
+      }
+      for (var chore in chorenames){
+        chorelist[chore]=false;
+        choretiles.add(addchore(chore, chorelist[chore]));
+      }
     }
     Future<void> getbiometrics() async{
       List<BiometricType> availablebio=await auth.getAvailableBiometrics();
       print("$availablebio");
     }
+    Widget addchore(String chorename,bool value){
+  return ListTile(
+    trailing: Checkbox(
+  value: value,
+   onChanged: (bool? newvalue) { 
+    setState((){
+        chorelist[chorename]=newvalue!;
+        choretiles[chorenames.indexOf(chorename)]=addchore(chorename, newvalue);
+    });
+        print(newvalue);
+        print(chorelist);
+      }),
+  title:Text(chorename),
+  leading: IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () {
+                  // Handle delete button tap here
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Delete Item'),
+                      content: Text('Are you sure you want to delete this item?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              choretiles.removeAt(chorenames.indexOf(chorename));
+                              chorenames.remove(chorename);
+                              chorelist.remove(chorename);
+                            });
+                            preferences.setStringList("chorenames",chorenames );
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+  )
+  );
+}
+    Future openchecklistDialog()=> showDialog(
+  
+  context: context, 
+  builder: (context)=>AlertDialog(
+    title: Text("Add chore"),
+    content:Column(children: [
+      TextField(
+      autofocus: true,
+      decoration:InputDecoration(hintText: "Type chore"),
+      controller: controller,
+    ),
+    
+      ]
+    ), 
+    actions: [
+     TextButton(onPressed: () {
+        Navigator.of(context).pop(controller.text);
+        controller.clear();
+      }, child: Text("Submit")),
+
+    ],
+  )
+);
+
   @override
   Widget build(BuildContext context) {
-    
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Lockbox Mode"),
-        centerTitle: true,
-      ),
-      body: Center(
-        child:
-            
-              LockSwitch(),
-        ),
-      
-    );
-  }
-}
-class LockSwitch extends StatefulWidget {
-  const LockSwitch({super.key});
-
-  @override
-  State<LockSwitch> createState() => _LockSwitchState();
-}
-
-class _LockSwitchState extends State<LockSwitch> {
-  late final LocalAuthentication auth;
-  bool canauth=false;
-  bool authenticated=false;
-  void initState(){
+     void initState(){
       super.initState();
       auth=LocalAuthentication();
       auth.isDeviceSupported().then((bool isSupport) => setState(() {
         canauth=isSupport;
       },));
     }
-  @override
-  
-  Widget build(BuildContext context) {
     Future<void> authenticate() async{
+    int checks=0;
+    setState(() {
+          chorelist.forEach((key, value) {
+            if (value==false){
+              checks=1;
+            }
+          });
+          if (checks==1){
+            lockstatus=false;
+            
+          }
+          else{
+            lockstatus=true;
+            
+          }
+          
+          
+        });
     try {
     authenticated=await auth.authenticate(
       localizedReason:
         "Authenticate to unlock the box",
       options: const AuthenticationOptions(
         stickyAuth: true,
-        biometricOnly: false
+        biometricOnly: true
       ),
     );
+    if (authenticated){
+      openbox();
+    }
     }
     on PlatformException catch(e){
       print(e);
     }
   }
-    
-    return Switch(value: lockstatus,  onChanged:(bool value) {
-      if (lockstatus==false){
-        authenticate();
-        // This is called when the user toggles the switch.
-        if (authenticated){
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Parental Mode"),
+        centerTitle: true,
+      ),
+      body: choretiles.isEmpty? Center(
+        child:
+              Text("Press the plus in the corner to add a chore you want your child to complete"),
+              //LockSwitch(),
+        )
+        :Column(children:[
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: choretiles.length,
+          itemBuilder: (context, index) {
+            
+            return choretiles[index];
+          },
+          ),
+          
+        
+          ElevatedButton(child: Text("Submit"),onPressed: () {
+            
+            authenticate();
+
+          }
+          )
+        ]
+        )
+        
+        ,
+      floatingActionButton:FloatingActionButton(child:Icon(Icons.add),onPressed: () async {
+        final chore=await openchecklistDialog();
         setState(() {
-          //final SharedPreferences preference = await prefs;
-          lockstatus = value;
-          openbox();
-          
+        chorenames.add(chore);
+        chorelist[chore]=false;
+        choretiles.add(addchore(chore,chorelist[chore]));
+        preferences.setStringList("chorenames", chorenames);
         });
-    }
-    else{
-      setState(() {
-          //final SharedPreferences preference = await prefs;
-          lockstatus = false;
-          openbox();
-          
-        });
-    }
-      }
-      else{
-    setState(() {
-          //final SharedPreferences preference = await prefs;
-          lockstatus = value;
-          openbox();
-          
-        });
-  }
-  }
+
+        }
+      ),
     
     );
-    
   }
-  
 }
+// class LockSwitch extends StatefulWidget {
+//   const LockSwitch({super.key});
+
+//   @override
+//   State<LockSwitch> createState() => _LockSwitchState();
+// }
+
+// class _LockSwitchState extends State<LockSwitch> {
+//   late final LocalAuthentication auth;
+//   bool canauth=false;
+//   bool authenticated=false;
+ 
+//   @override
+  
+//   Widget build(BuildContext context) {
+    
+    
+//     return Switch(value: lockstatus,  onChanged:(bool value) {
+//       if (lockstatus==false){
+//         authenticate();
+//         // This is called when the user toggles the switch.
+//         if (authenticated){
+//         setState(() {
+//           //final SharedPreferences preference = await prefs;
+//           lockstatus = value;
+//           openbox();
+          
+//         });
+//     }
+//     else{
+//       setState(() {
+//           //final SharedPreferences preference = await prefs;
+//           lockstatus = false;
+//           openbox();
+          
+//         });
+//     }
+//       }
+//       else{
+//     setState(() {
+//           //final SharedPreferences preference = await prefs;
+//           lockstatus = value;
+//           openbox();
+          
+//         });
+//   }
+//   }
+    
+//     );
+    
+//   }
+  
+// }
     
