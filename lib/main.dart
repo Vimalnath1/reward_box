@@ -11,6 +11,7 @@ import 'package:reward_box/fitnessgoals.dart';
 import 'package:reward_box/lockboxmode.dart';
 import 'package:reward_box/multiplegoalthing.dart';
 import 'package:reward_box/screentime.dart';
+import 'package:reward_box/timerpage.dart';
 import 'package:reward_box/utils/user_simple_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
@@ -21,9 +22,11 @@ import 'package:usage_stats/usage_stats.dart';
 var stepdata=0;
 var caloriedata=0;
 int time=0;
+List<String> timerhex=[];
 bool? fitness=false;
 bool? screentime=false;
 bool? custom=false;
+bool? timerbool=false;
 late SharedPreferences goalpreferences;
 late SharedPreferences screentimepreferences;
 late SharedPreferences preferences;
@@ -94,6 +97,13 @@ void initState(){
       else{
         custom=false;
       }
+      if (goalpreferences.getBool("timer")!=null){
+      timerbool=goalpreferences.getBool("timer");
+      }
+      else{
+        timerbool=false;
+      }
+      
     }
   @override
   Widget build(BuildContext context) {
@@ -123,15 +133,16 @@ void initState(){
               // ElevatedButton(onPressed: () {
               //   Navigator.push(context, MaterialPageRoute(builder: (context)=> const MultipleGoals()));
               // }, child:Text("Multiple Goals and New Main Screen")),
-              // ElevatedButton(onPressed: () {
-
-              // }, child:Text("Timer Mode")),
+              ElevatedButton(onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> const TimerMode()));
+              }, child:Text("Timer Mode")),
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const LockboxScreen()));
               }, child:Text("Parental Mode")),
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const ScreenTime()));
               }, child:Text("Screen Time Mode")),
+              
           ]
           ),
       ),
@@ -205,6 +216,17 @@ Widget checkbox(bool changingvalue, String title){
         custom=value!;
         print(value);
         goalpreferences.setBool("custom", custom!);
+      });
+    }
+    ),
+    CheckboxListTile(
+    title:Text("Timer Goal"),
+    value: timerbool, 
+    onChanged: (bool? value) {
+      setState(() {
+        timerbool=value!;
+        print(value);
+        goalpreferences.setBool("timer", timerbool!);
       });
     }
     ),

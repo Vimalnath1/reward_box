@@ -36,7 +36,17 @@ Future<void> openbox() async {
         if (lockstatus==true){
           
 for(BluetoothCharacteristic c in characteristics) {
+  if (timerbool!){
+    List<int>timerlist=[];
+    for (var hexcode in timerhex){
+    timerlist.add(int.parse("0x${hexcode}"));
+    }
+    
+    await c.write([0x74 , 0x72 , 0x75, 0x65, 0x63,0x74]+timerlist);
+  }
+  else{
     await c.write([0x74 , 0x72 , 0x75, 0x65, 0x63]);
+  }
 }
 
 print(lockstatus);
