@@ -203,14 +203,17 @@ class _ScreenTimeState extends State<ScreenTime> {
           //time=(time/tin).round();
           //if (int.parse(screentimepreferences.getString("${selectedapp} FirstTime")!)<startDate.millisecondsSinceEpoch){
             print(time);
-            time-=screentimepreferences.getInt("${selectedapp} PreviousTime")!;
-            print(screentimepreferences.getInt("${selectedapp} PreviousTime")!);
+            if (screentimepreferences.getInt("${selectedapp} PreviousTime")!=null){
+              time-=screentimepreferences.getInt("${selectedapp} PreviousTime")!;
+            }
+            
+            //print(screentimepreferences.getInt("${selectedapp} PreviousTime")!);
             if (time<0){
               time=0;
             }
             //screentimepreferences.setInt("screentime",time);
-            print(screentimepreferences.getString("${selectedapp} FirstTime")!);
-            print(screentimepreferences.getString("${selectedapp} EndTime")!);
+            // print(screentimepreferences.getString("${selectedapp} FirstTime")!);
+            // print(screentimepreferences.getString("${selectedapp} EndTime")!);
             
           //}
           for (var info in _infos) {
