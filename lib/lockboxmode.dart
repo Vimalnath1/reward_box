@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:flutter/services.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/src/widgets/framework.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:reward_box/screentime.dart';
+import 'package:reward_box/screentime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:reward_box/main.dart';
@@ -18,11 +21,18 @@ class LockboxScreen extends StatefulWidget {
   State<LockboxScreen> createState() => _LockboxScreenState();
 }
 Future<SharedPreferences> prefs=SharedPreferences.getInstance();
-bool lockstatus=false;
-bool lockstatusfitness=false;
-bool lockstatusscreentime=false;
+List<int> stringtohex(String string) {
+  List<int> bytes = [];
+  List<int> stringashex=[];
+    bytes.addAll(utf8.encode(string));
+  bytes.forEach((int ints) {
+    stringashex.add(int.parse("0x${ints.toRadixString(16)}"));
+  });
+
+  return stringashex;
+}
+
 Future<void> openbox() async {
-  
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance; 
   var connecteddevices=await flutterBlue.connectedDevices;
   for (var device in connecteddevices){
@@ -32,159 +42,70 @@ Future<void> openbox() async {
       
       services.forEach((service) async {
         var characteristics = service.characteristics;
-        if (custom! && fitness==false && screentime==false){
-        if (lockstatus==true){
+        List<int> message=[];
+        
+        if (custom!){
+          message+=stringtohex("c");
+        }
+        if (fitness!){
+          message+=stringtohex("f");
+        }
+        if (screentime!){
+          message+=stringtohex("s");
+        }
+        if (timerbool!){
+          message+=stringtohex("t");
+        }
+        message+=stringtohex("(");
+        if (custom! && lockstatus==true){
+          message+=stringtohex("+");
+        }
+        else if (custom! && lockstatus!=true){
+          message+=stringtohex("-");
+        }
+        if (fitness! && lockstatusfitness==true){
+          message+=stringtohex("+");
+        }
+        else if (fitness! && lockstatusfitness!=true){
+          message+=stringtohex("-");
+        }
+        if (screentime! && lockstatusscreentime==true){
+          message+=stringtohex("+");
+        }
+        else if (screentime! && lockstatusscreentime!=true){
+          message+=stringtohex("-");
+        }
+        message+=stringtohex(")");
+        if (custom!){
+          for(BluetoothCharacteristic c in characteristics) {
+            await c.write(parentalprogress);
+          }
+        }
+        if (timerbool!){
+          for(BluetoothCharacteristic c in characteristics) {
+            await c.write(timerprogress);
+          }
+        }
+        if (fitness!){
+          for(BluetoothCharacteristic c in characteristics) {
+            await c.write(fitnessprogress);
+          }
+        }
+
+        if (screentime!){
           
-for(BluetoothCharacteristic c in characteristics) {
-  if (timerbool!){
-    List<int>timerlist=[];
-    for (var hexcode in timerhex){
-    timerlist.add(int.parse("0x${hexcode}"));
-    }
-    
-    await c.write([0x74 , 0x72 , 0x75, 0x65, 0x63,0x74]+timerlist);
-  }
-  else{
-    await c.write([0x74 , 0x72 , 0x75, 0x65, 0x63]);
-  }
+          for(BluetoothCharacteristic c in characteristics) {
+            await c.write(screentimeprogress);
+          }
+        }
+        for(BluetoothCharacteristic c in characteristics) {
+    await c.write(message);
+  
 }
 
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65]); 
-          }
-        }
-        }
-        else if (custom! && fitness! && screentime==false){
-if (lockstatus==true &&lockstatusfitness==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x63,0x66]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
-        else if (custom==false && fitness! && screentime==false){
-          if (lockstatusfitness==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
-        else if (custom==false && fitness==false && screentime!){
-          if (lockstatusscreentime==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x73]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
-        else if (custom==false && fitness! && screentime!){
-          if (lockstatusscreentime==true && lockstatusfitness==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66,0x73]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
-        else if (custom! && fitness! && screentime!){
-          if (lockstatusscreentime==true && lockstatusfitness==true && lockstatus==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x66,0x73,0x63]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
-        else if (custom! && fitness==false && screentime!){
-          if (lockstatusscreentime==true && lockstatus==true){
-          
-for(BluetoothCharacteristic c in characteristics) {
-    await c.write([0x74 , 0x72 , 0x75, 0x65,0x73,0x63]);
-}
-
-print(lockstatus);
- Timer(Duration(milliseconds: 600000), () async {
-            for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65,]);
-          }
-          });
-        }
-        else {
-          for(BluetoothCharacteristic c in characteristics) {
-              await c.write([0x66, 0x61, 0x6C, 0x73, 0x65, ]);
-          }
-        }
-        }
       });
     }
-  }
+   }
 }
 
 
@@ -199,6 +120,8 @@ class _LockboxScreenState extends State<LockboxScreen> {
   
   late SharedPreferences preferences;
   List<String> chorenames=[];
+  int completedchores=0;
+   
   void initState(){
     init();
     controller=TextEditingController();
@@ -305,10 +228,14 @@ class _LockboxScreenState extends State<LockboxScreen> {
     }
     Future<void> authenticate() async{
     int checks=0;
+    completedchores=0;
     setState(() {
           chorelist.forEach((key, value) {
             if (value==false){
               checks=1;
+            }
+            else{
+              completedchores++;
             }
           });
           if (checks==1){
@@ -363,7 +290,14 @@ class _LockboxScreenState extends State<LockboxScreen> {
           ElevatedButton(child: Text("Submit"),onPressed: () {
             
             authenticate();
-
+            parentalprogress=[];
+            parentalprogress+=stringtohex("p");
+            parentalprogress+=stringtohex("c");
+            parentalprogress+=stringtohex("(");
+            parentalprogress+=stringtohex(completedchores.toString());
+            parentalprogress+=stringtohex(",");
+            parentalprogress+=stringtohex(chorenames.length.toString());
+            parentalprogress+=stringtohex(")");
           }
           )
         ]

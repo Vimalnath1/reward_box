@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reward_box/lockboxmode.dart';
 import 'package:reward_box/main.dart';
 
 class TimerMode extends StatefulWidget {
@@ -11,7 +12,7 @@ class TimerMode extends StatefulWidget {
 class _TimerModeState extends State<TimerMode> {
   late TextEditingController controller;
   int timertime=0;
-  String hour="";
+  String minutes="";
   @override
   void initState() {
      controller=TextEditingController();
@@ -54,20 +55,25 @@ class _TimerModeState extends State<TimerMode> {
               textAlign: TextAlign.center,
               ),
               ElevatedButton(onPressed: () async {
-                final hour=await openDialog();
-                setState(()=>this.hour=hour!);
-                print(hour);
-                
+                final minutes=await openDialog();
+                setState(()=>this.minutes=minutes!);
+                print(minutes);
+                timerprogress=[];
+                timerprogress+=stringtohex("p");
+                timerprogress+=stringtohex("t");
+                timerprogress+=stringtohex("(");
+                timerprogress+=stringtohex(minutes);
+                timerprogress+=stringtohex(")");
                 //String hourascii=String.fromCharCode(int.parse(hour));
-                for (int i=0;i<hour.length;i++){
-                int asciivalue=hour.codeUnitAt(i);
-                setState(() {
-                  timerhex.add(asciivalue.toRadixString(16));
-                });
+                // for (int i=0;i<hour.length;i++){
+                // int asciivalue=hour.codeUnitAt(i);
+                // setState(() {
+                //   timerhex.add(asciivalue.toRadixString(16));
+                // });
                 
-                };
+                // };
                 
-                print(timerhex);
+                openbox();
               }, child: Text("Set Timer")),
               
               

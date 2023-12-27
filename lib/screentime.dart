@@ -8,6 +8,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
+import 'package:reward_box/fitnessgoals.dart';
 import 'package:reward_box/lockboxmode.dart';
 import 'package:reward_box/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,7 +47,7 @@ class ScreenTime extends StatefulWidget {
 }
 String appname="";
 List<String> searchapps=[];
-
+String screengoal="";
 
 class _ScreenTimeState extends State<ScreenTime> {
   List<AppUsageInfo> _infos = [];
@@ -55,7 +56,7 @@ class _ScreenTimeState extends State<ScreenTime> {
   Map<String, UsageInfo> meow={};
   bool pressed=false;
   late TextEditingController controller;
-  String screengoal="";
+  // screengoal="";
   bool gotdata=false;
   late SharedPreferences preferences;
   
@@ -71,6 +72,7 @@ class _ScreenTimeState extends State<ScreenTime> {
   UsageStats.grantUsagePermission();
   }
     Future init() async{
+      print(time);
       appname=screentimepreferences.getString("app")!;
       screengoal=screentimepreferences.getString("screengoal")!;
       //setState(()=> this.appname=appname);
@@ -153,7 +155,7 @@ class _ScreenTimeState extends State<ScreenTime> {
               final screengoal=await openDialog(appbuttons);
               screentimepreferences.setString("app",appname);
               screentimepreferences.setString("screengoal",screengoal);
-              setState(()=>this.screengoal=screengoal!);
+              // setState(()=>screengoal=screengoal!);
               setState(() {
                 pressed=true;
               });
@@ -161,6 +163,7 @@ class _ScreenTimeState extends State<ScreenTime> {
           ElevatedButton(onPressed: ()  {
             //AppSettings.openAppSettings(type:AppSettingsType.display);
             //FlutterBackgroundService().invoke("setAsBackground");
+            Navigator.push(context, MaterialPageRoute(builder: (context)=> const FitnessScreen()));
           }, child: Text("Settings")),
         pressed?
         Column(children: [
@@ -212,8 +215,8 @@ class _ScreenTimeState extends State<ScreenTime> {
               time=0;
             }
             //screentimepreferences.setInt("screentime",time);
-            // print(screentimepreferences.getString("${selectedapp} FirstTime")!);
-            // print(screentimepreferences.getString("${selectedapp} EndTime")!);
+             print(screentimepreferences.getString("${selectedapp} FirstTime")!);
+             print(screentimepreferences.getString("${selectedapp} EndTime")!);
             
           //}
           for (var info in _infos) {
@@ -240,13 +243,29 @@ class _ScreenTimeState extends State<ScreenTime> {
                 hours=int.parse(screengoal)-((time/1000/3600).floor());
               }
                print(hours);
-          //print(time);
-              if (time<(int.parse(screengoal)*60)){
+          print(time);
+          print(int.parse(screengoal)*60);
+              if (time<(int.parse(screengoal)*3600*1000)){
                 lockstatusscreentime=true;
               }
               else{
                 lockstatusscreentime=false;
               }
+              screentimeprogress=[];
+              screentimeprogress+=stringtohex("p");
+          screentimeprogress+=stringtohex("s");
+          screentimeprogress+=stringtohex("(");
+          screentimeprogress+=stringtohex(appname);
+          screentimeprogress+=stringtohex(",");
+          screentimeprogress+=stringtohex(screengoal);
+          screentimeprogress+=stringtohex("/");
+          if (lockstatusscreentime){
+            screentimeprogress+=stringtohex("+");
+          }
+          else{
+            screentimeprogress+=stringtohex("-");
+          }
+          screentimeprogress+=stringtohex(")");
               openbox();
               setState(() {
                 gotdata=true;

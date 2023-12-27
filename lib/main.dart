@@ -21,7 +21,12 @@ import 'package:usage_stats/usage_stats.dart';
 
 var stepdata=0;
 var caloriedata=0;
+var stepsleft="";
 int time=0;
+List<int> fitnessprogress=[];
+List<int> screentimeprogress=[];
+List<int> parentalprogress=[];
+List<int> timerprogress=[];
 List<String> timerhex=[];
 bool? fitness=false;
 bool? screentime=false;
@@ -30,6 +35,9 @@ bool? timerbool=false;
 late SharedPreferences goalpreferences;
 late SharedPreferences screentimepreferences;
 late SharedPreferences preferences;
+bool lockstatus=false;
+bool lockstatusfitness=false;
+bool lockstatusscreentime=false;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   screentimepreferences=await SharedPreferences.getInstance();
@@ -69,6 +77,7 @@ class _MyAppState extends State<MyApp> {
 void initState(){
   super.initState();
     init();
+      print("meo");
         
       }
       Future init() async {
@@ -105,6 +114,7 @@ void initState(){
       }
       
     }
+    
   @override
   Widget build(BuildContext context) {
     
@@ -122,27 +132,34 @@ void initState(){
               ),
               ElevatedButton(onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=>Checklist()));
+                
               }, child:Text("Choose Goals")),
               ElevatedButton(onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=> const BluetoothScreen()));
               }, child: Text("Connect to Device")),
-               
+              Visibility(visible: fitness!,child: 
               ElevatedButton(onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=> const FitnessScreen()));
               }, child:Text("Fitness Mode")),
-              // ElevatedButton(onPressed: () {
-              //   Navigator.push(context, MaterialPageRoute(builder: (context)=> const MultipleGoals()));
-              // }, child:Text("Multiple Goals and New Main Screen")),
+              ),
+              Visibility(visible: timerbool!,child: 
               ElevatedButton(onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context)=> const TimerMode()));
               }, child:Text("Timer Mode")),
+              ),
+              // ElevatedButton(onPressed: () {
+              //   Navigator.push(context, MaterialPageRoute(builder: (context)=> const MultipleGoals()));
+              // }, child:Text("Multiple Goals and New Main Screen")),
+              Visibility(visible: custom!,child: 
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const LockboxScreen()));
               }, child:Text("Parental Mode")),
+              ),
+              Visibility(visible: screentime!,child: 
               ElevatedButton(onPressed: () {
                 Navigator.push(context,MaterialPageRoute(builder: (context)=>const ScreenTime()));
               }, child:Text("Screen Time Mode")),
-              
+              )
           ]
           ),
       ),
@@ -194,6 +211,9 @@ Widget checkbox(bool changingvalue, String title){
         print(value);
         goalpreferences.setBool("fitness", fitness!);
       });
+      setState(() {
+                  fitness=fitness!;
+                });
       
     }
     ),
@@ -230,12 +250,12 @@ Widget checkbox(bool changingvalue, String title){
       });
     }
     ),
-    // ElevatedButton(onPressed: () {
+     ElevatedButton(onPressed: () {
       
       
       
-    //   Navigator.pop(context);
-    //   }, child: Text("Submit"))
+       Navigator.push(context, MaterialPageRoute(builder: (context)=> const MyApp()));
+     }, child: Text("Submit"))
           ]
         ),
       ),

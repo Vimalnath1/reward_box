@@ -55,7 +55,7 @@ late TextEditingController controller;
 class _FitnessScreenState extends State<FitnessScreen> {
   List<HealthDataPoint> _healthDataList = [];
   static final types = dataTypesAndroid;
-    final permissions = types.map((e) => HealthDataAccess.READ_WRITE).toList();
+    final permissions = types.map((e) => HealthDataAccess.READ).toList();
   HealthFactory health = HealthFactory(useHealthConnectIfAvailable: true);
   String goal="";
   var stepgoalexists=false;
@@ -301,7 +301,15 @@ int goaltime=1;
   }
 
   Widget goalprogress(String goaltype, String goal,int data) {
-    
+    if (goaltype=="Step"){
+      stepsleft=(int.parse(goal)-data).toString();
+      fitnessprogress=[];
+      fitnessprogress+=stringtohex("p");
+      fitnessprogress+=stringtohex("f");
+      fitnessprogress+=stringtohex("(");
+      fitnessprogress+=stringtohex(stepsleft);
+      fitnessprogress+=stringtohex(")");
+    }
     return Column(
       children: [
         Text("$goaltype Goal: $goal"),
@@ -309,9 +317,15 @@ int goaltime=1;
         ElevatedButton(onPressed: () {
           if ((int.parse(goal)-data)<=0){
             lockstatusfitness=true;
-            openbox();
+            
             
           }
+          else{
+            lockstatusfitness=false;
+          }
+          
+            
+          openbox();
         }, child: Text("Open Box"))
       ],
     );
