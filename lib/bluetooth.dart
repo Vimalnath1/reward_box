@@ -26,7 +26,7 @@ Widget devicebutton(String title, BuildContext context){
     result=flutterBlue.scanResults;
     result.listen((results) {
       for (ScanResult devices in results){
-        if (devices.device.name==title){
+        if (devices.device.localName==title){
           devices.device.connect();
           Navigator.push(context, MaterialPageRoute(builder: (context)=> const MyApp()));
         }
@@ -88,9 +88,9 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
               
                 // FlutterBluePlus.instance.startScan(timeout: const Duration(milliseconds: 100));
                 // FlutterBluePlus.instance.stopScan();
-                Timer(Duration(milliseconds: 100), () {
+                // Timer(Duration(milliseconds: 100), () {
   flutterBlue.startScan(timeout: const Duration(seconds: 1));
-});
+// });
                 
                 //print(flutterBlue.);
                 result=flutterBlue.scanResults;

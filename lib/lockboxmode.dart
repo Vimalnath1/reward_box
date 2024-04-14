@@ -82,6 +82,21 @@ Future<void> openbox() async {
           }
         }
         if (timerbool!){
+          timerprogress=[];
+          int timetolight=(int.parse(minutes)-((TimeOfDay.now().hour*60)+TimeOfDay.now().minute));
+          print(timetolight);
+          print(TimeOfDay.now());
+          if (timetolight<0){
+            timetolight+=1440; 
+          }
+          timerprogress+=stringtohex("p");
+          timerprogress+=stringtohex("t");
+          timerprogress+=stringtohex("(");
+          timerprogress+=stringtohex(timetolight.toString());
+          timerprogress+=stringtohex(")");
+          for(BluetoothCharacteristic c in characteristics) {
+            await c.write(stringtohex("~"+(lightuptime.hour).toString()+":"+(lightuptime.minute).toString()));
+          }
           for(BluetoothCharacteristic c in characteristics) {
             await c.write(timerprogress);
           }
@@ -99,6 +114,7 @@ Future<void> openbox() async {
           }
         }
         for(BluetoothCharacteristic c in characteristics) {
+    
     await c.write(message);
   
 }

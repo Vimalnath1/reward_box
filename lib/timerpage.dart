@@ -12,34 +12,39 @@ class TimerMode extends StatefulWidget {
 class _TimerModeState extends State<TimerMode> {
   late TextEditingController controller;
   int timertime=0;
-  String minutes="";
+  
+  
   @override
   void initState() {
      controller=TextEditingController();
     super.initState();
 
   }
-  Future openDialog()=> showDialog(
+//   Future openDialog()=> showDialog(
   
-  context: context, 
-  builder: (context)=>AlertDialog(
-    title: Text("Set Timer"),
-    content:
-      TextField(
-      autofocus: true,
-      decoration:InputDecoration(hintText: "Set timer length in minutes"),
-      controller: controller,
-    ),
-    actions: [
-     TextButton(onPressed: () {
-        {Navigator.of(context).pop(controller.text);}
-        controller.clear();
+//   context: context, 
+//   builder: (context)=>AlertDialog(
+//     title: Text("Set Timer"),
+//     content:
+//       TextField(
+//       autofocus: true,
+//       decoration:InputDecoration(hintText: "Set timer length in minutes"),
+//       controller: controller,
+//     ),
+//     actions: [
+//      TextButton(onPressed: () {
+//         {Navigator.of(context).pop(controller.text);}
+//         controller.clear();
 
-      }, child: Text("Submit")),
+//       }, child: Text("Submit")),
 
-    ],
-  )
-);
+//     ],
+//   )
+// );
+// Future openDialog()=>showTimePicker(
+//   context: context, 
+//   initialTime:TimeOfDay.now() 
+//   );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,15 +60,19 @@ class _TimerModeState extends State<TimerMode> {
               textAlign: TextAlign.center,
               ),
               ElevatedButton(onPressed: () async {
-                final minutes=await openDialog();
-                setState(()=>this.minutes=minutes!);
+                minutes="";
+                final newtime=await showTimePicker(context: context, 
+                initialTime: lightuptime
+                );
+                if (lightuptime!=null){
+                    setState(()=>lightuptime=newtime!);
+                }
+                
+                print(lightuptime.toString());
+                minutes=(lightuptime.hour*60+lightuptime.minute).toString();
                 print(minutes);
                 timerprogress=[];
-                timerprogress+=stringtohex("p");
-                timerprogress+=stringtohex("t");
-                timerprogress+=stringtohex("(");
-                timerprogress+=stringtohex(minutes);
-                timerprogress+=stringtohex(")");
+                
                 //String hourascii=String.fromCharCode(int.parse(hour));
                 // for (int i=0;i<hour.length;i++){
                 // int asciivalue=hour.codeUnitAt(i);

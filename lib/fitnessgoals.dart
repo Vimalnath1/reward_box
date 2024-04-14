@@ -58,6 +58,7 @@ class _FitnessScreenState extends State<FitnessScreen> {
     final permissions = types.map((e) => HealthDataAccess.READ).toList();
   HealthFactory health = HealthFactory(useHealthConnectIfAvailable: true);
   String goal="";
+  String caloriegoal="";
   var stepgoalexists=false;
   var caloriegoalexists=false;
   late SharedPreferences preferences;
@@ -80,17 +81,28 @@ int goaltime=1;
   //   await AndroidAlarmManager.periodic(const Duration(minutes: 2), 0, printHello,exact: true, // Set to true for precise timing
   // wakeup: true,);
     preferences=await SharedPreferences.getInstance();
-    goal=preferences.getString("goal")!;
+    goal=(preferences.getString("goal") == null) ? "" : preferences.getString("goal")!;
+    caloriegoal=(preferences.getString("caloriegoal") == null) ? "" : preferences.getString("caloriegoal")!;
     print(preferences.getString("goal")!);
     getSteps();
+    getCalories();
     setState(()=> this.goal=goal);
+    setState(()=> this.caloriegoal=caloriegoal);
     if (goal!=""){
     stepgoalexists=true;
-    caloriegoalexists=true;
+    // caloriegoalexists=true;
   }
   else{
     stepgoalexists=false;
+    // caloriegoalexists=false;
+  }
+  if (caloriegoal!=""){
+    caloriegoalexists=true;
+    // caloriegoalexists=true;
+  }
+  else{
     caloriegoalexists=false;
+    // caloriegoalexists=false;
   }
   }
   void getSteps(){
@@ -100,6 +112,16 @@ int goaltime=1;
     }
     else{
       stepdata=0;
+    }
+    
+    }
+  void getCalories(){
+    int? calorietimestamp=preferences.getInt("time");
+    if (calorietimestamp!-(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).millisecondsSinceEpoch>0){
+      caloriedata=preferences.getInt("calories")!;
+    }
+    else{
+      caloriedata=0;
     }
     
     }
@@ -179,16 +201,16 @@ int goaltime=1;
                   });
                 }, child: Text("Step Goal")),
                 ElevatedButton(onPressed: () async {
-                  final goal= await openDialog("Calorie Goal",1000);
-                  setState(()=>this.goal=goal!);
-                  print(goal);
+                  final caloriegoal= await openDialog("Calorie Goal",1000);
+                  setState(()=>this.caloriegoal=caloriegoal!);
+                  print(caloriegoal);
                   setState(() {
                     caloriegoalexists=true;
                   });
                   
                 }, child: Text("Calorie Goal")),
                 stepgoalexists?goalprogress("Step", goal,stepdata):Text(""),
-                caloriegoalexists?goalprogress("Calorie", goal,caloriedata):Text(""),
+                caloriegoalexists?goalprogress("Calorie", caloriegoal,caloriedata):Text(""),
                 ElevatedButton(onPressed: () async {
                       await Permission.activityRecognition.request();
     await Permission.location.request();
@@ -244,54 +266,31 @@ int goaltime=1;
     }
                 }, child: Text("Fetch Step Data")),
                 ElevatedButton(onPressed: () async {
-                  await Permission.activityRecognition.request();
-    await Permission.location.request();
-
-    // Check if we have permission
-    bool? hasPermissions =
-        await health.hasPermissions(types, permissions: permissions);
-
-    // hasPermissions = false because the hasPermission cannot disclose if WRITE access exists.
-    // Hence, we have to request with WRITE as well.
-    hasPermissions = false;
-
-    bool authorized = false;
-    if (!hasPermissions) {
-      // requesting access to the data types before reading them
-      try {
-        authorized =
-            await health.requestAuthorization(types, permissions: permissions);
-      } catch (error) {
-        print("Exception in authorize: $error");
-      }
-    }
-                  int? calories;
-                  List<HealthDataPoint> healthDataList = [];
-                  final now = DateTime.now();
-    final midnight = DateTime(now.year, now.month, now.day);
-
-    bool requested = await health.requestAuthorization([HealthDataType.ACTIVE_ENERGY_BURNED]);
-
-    if (requested) {
-      try {
-        healthDataList= await health.getHealthDataFromTypes(midnight, now,[HealthDataType.ACTIVE_ENERGY_BURNED]);
-        print("Wahoo ${healthDataList}");
-        calories=int.parse((healthDataList[0].value).toString()) ;
-        
-      } catch (error) {
-        print("Caught exception in getting calories: $error");
-      }
-
-      print('Total number of steps: $calories');
-
-      setState(() {
-        caloriedata = (calories == null) ? 0 : calories;
-        
+                  var startTime = DateTime(DateTime.now().year,DateTime.now().month, DateTime.now().day).subtract(Duration(days:0));
+                var endTime = DateTime.now();
+                // var endTimer=DateTime(DateTime.now().year,DateTime.now().month, DateTime.now().day).add(Duration(hours: 1));
+                final calorielist= <Future>[];
+                 Map<String, dynamic> calorieset= {};
+                 calorielist.add(HealthConnectFactory.getRecord(
+                      type: HealthConnectDataType.TotalCaloriesBurned,
+                      startTime: startTime,
+                      endTime: endTime,
+                    ).then((value) => calorieset.addAll({HealthConnectDataType.TotalCaloriesBurned.name: value})));
+                     await Future.wait(calorielist);
+                     int caloriesburned=0;
+                     for (int i=0; i<calorieset["TotalCaloriesBurned"]['records'].length;i++){
+                      if (calorieset["TotalCaloriesBurned"]['records'][i]["metadata"]["dataOrigin"]["packageName"]=="com.google.android.apps.fitness"){
+                        caloriesburned+=double.parse(calorieset["TotalCaloriesBurned"]['records'][i]["energy"]["kilocalories"].toString()).toInt();
+                      }
+                  // print(typePoints["Steps"]['records'][i]["endTime"]["epochSecond"]);
+                  print(calorieset["TotalCaloriesBurned"]['records'][i]["metadata"]["dataOrigin"]);
+                  }
+                  print(caloriesburned);
+                  setState(() {
+        caloriedata = (caloriesburned == null) ? 0 : caloriesburned;
+        preferences.setInt("time", DateTime.now().millisecondsSinceEpoch);
+        preferences.setInt("calories", caloriedata);
       });
-    } else {
-      print("Authorization not granted - error in authorization");
-
-    }
                 }, child: Text("Fetch Calorie Data")),
             ]
           ),
@@ -306,8 +305,19 @@ int goaltime=1;
       fitnessprogress=[];
       fitnessprogress+=stringtohex("p");
       fitnessprogress+=stringtohex("f");
+      fitnessprogress+=stringtohex("s");
       fitnessprogress+=stringtohex("(");
       fitnessprogress+=stringtohex(stepsleft);
+      fitnessprogress+=stringtohex(")");
+    }
+    if (goaltype=="Calorie"){
+      caloriesleft=(int.parse(goal)-data).toString();
+      fitnessprogress=[];
+      fitnessprogress+=stringtohex("p");
+      fitnessprogress+=stringtohex("f");
+      fitnessprogress+=stringtohex("c");
+      fitnessprogress+=stringtohex("(");
+      fitnessprogress+=stringtohex(caloriesleft);
       fitnessprogress+=stringtohex(")");
     }
     return Column(
